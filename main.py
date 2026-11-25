@@ -33,11 +33,16 @@ def load_note():
 
 def main():
     note = load_note()
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    # An explicitly empty MAKEFUN_OUTPUT_DIR is treated as unset: without
+    # this, os.makedirs("") raises FileNotFoundError and the run dies.
+    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "entry.txt")
     with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(note)
+        # Terminate with a newline so the output file is byte-identical to
+        # entry.txt (which ends with one); previously the file was one byte
+        # short and `cmp` against entry.txt failed.
+        handle.write(note + "\n")
     # Outputs are collected as another user: leave the file world-readable.
     os.chmod(path, 0o644)
     print(note)
